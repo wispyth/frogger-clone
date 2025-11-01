@@ -6,9 +6,9 @@ import numpy as np
 # =========================
 
 CELL_SIZE       = 40                        # 1 клетка = 40 пикселей
-GRID_COLS       = 16
+GRID_COLS       = 17
 GRID_ROWS       = 12
-WINDOW_WIDTH    = GRID_COLS * CELL_SIZE     # 16 * 40 = 640
+WINDOW_WIDTH    = GRID_COLS * CELL_SIZE     # 17 * 40 = 680
 WINDOW_HEIGHT   = GRID_ROWS * CELL_SIZE     # 12 * 40 = 480
 
 WINDOW_TITLE    = "Frogger"
@@ -86,11 +86,33 @@ def draw_ui(frame):
                 (255, 255, 255),
                 1,
                 cv2.LINE_AA)
+    
+def draw_frog(frame, frog_col, frog_row):
+    # вычисляем пиксели, в которых рисуем лягушку
+    x_start = frog_col * CELL_SIZE + 4
+    y_start = frog_row * CELL_SIZE + 4
+    x_end = (frog_col + 1) * CELL_SIZE - 4
+    y_end = (frog_row + 1) * CELL_SIZE - 4
+    
+    # рисуем
+    cv2.rectangle(frame, (x_start, y_start), (x_end, y_end), (0, 255, 0), -1)
+
+def clamp(num, min, max):
+    if num < min:
+        num = min
+    if num > max:
+        num = max
+
+    return num
 
 def main():
     # создаём окно
     cv2.namedWindow(WINDOW_TITLE, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT)
+
+    # координаты лягушки в сетке
+    frog_col = GRID_COLS // 2
+    frog_row = GRID_ROWS - 2
 
     while True:
         # создаём пустой кадр
@@ -102,6 +124,9 @@ def main():
         # рисуем сетку
         draw_grid(frame)
 
+        # рисуем лягушку
+        draw_frog(frame, frog_col, frog_row)
+
         # рисуем UI
         draw_ui(frame)
 
@@ -112,6 +137,22 @@ def main():
         key = cv2.waitKey(FRAME_DELAY_MS) & 0xFF
         if key == 27 or key == ord('q'):    # ESC или q
             break
+        elif key in (ord('w'), 82): # W или стрелка вверх
+            frog_row -= 1
+        elif key in (ord('a'), 81): # A или стрелка влево
+            frog_col -= 1
+        elif key in (ord('s'), 84): # S или стрелка вниз
+            frog_row += 1
+        elif key in (ord('d'), 83): # D или стрелка вправо
+            frog_col += 1
+        elif key == ord('r'):
+            # вернуться в начальную точку
+            frog_col = GRID_COLS // 2
+            frog_row = GRID_ROWS - 2
+
+        # проверка на выход за границы для лягушки
+        frog_col = clamp(frog_col, 0, GRID_COLS - 1)
+        frog_row = clamp(frog_row, 0, GRID_ROWS - 1)
 
     cv2.destroyAllWindows()
 
