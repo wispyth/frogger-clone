@@ -30,18 +30,28 @@ class Game:
         cv2.resizeWindow(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT)
 
         # сущности
-        self.log_spawner = WoodLogSpawner(WATER_LANES)
         self.frog = Frog(col=GRID_COLS // 2, row=GRID_ROWS - 2)
         self.car_spawner = CarSpawner(ROAD_LANES)
+        self.log_spawner = WoodLogSpawner(WATER_LANES)
 
         # время
         self.last_time = time.time()
         self.running = True
+        self.paused = False
 
     def handle_input(self, key):
         # выход
-        if key == 27 or key == ord('q'):    # ESC или Q
+        if key == 27 or key == ord('q'):
             self.running = False
+            return
+        
+        # пауза
+        if key == ord('p'):
+            self.paused = not self.paused
+            return
+
+        # когда игра на паузе, движения не должны обрабатываться
+        if self.paused:
             return
         
         # движение
@@ -55,6 +65,9 @@ class Game:
             self.frog.move(+1, 0)
 
     def update(self, current_time, dt):
+        if self.paused:
+            return
+
         self.car_spawner.update(current_time, dt)
         self.log_spawner.update(current_time, dt)
 
