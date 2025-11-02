@@ -23,6 +23,16 @@ class Frog:
     x: float
     y: float
 
+    @property
+    def hitbox(self):
+        return (self.x + 1, self.y + 1, self.x + 1 * CELL_SIZE - 1, self.y + 1 * CELL_SIZE - 1)
+
+    def on_road(self) -> bool:
+        return int(self.y / CELL_SIZE) in (5, 6, 7, 8)
+    
+    def on_water(self) -> bool:
+        return int(self.y / CELL_SIZE) in (1, 2, 3, 4)
+
     def update(self, dt: float):
         self.x = clamp(self.x, 0, (GRID_COLS - 1) * CELL_SIZE)
         self.y = clamp(self.y, 0, (GRID_ROWS - 1) * CELL_SIZE)
@@ -34,6 +44,13 @@ class Frog:
     def reset(self):
         self.x = (GRID_COLS // 2) * CELL_SIZE
         self.y = (GRID_ROWS - 2) * CELL_SIZE
+
+    def get_hitbox(self):
+        x1 = self.x + 1
+        y1 = self.y + 1
+        x2 = self.x + 1 * CELL_SIZE - 1
+        y2 = self.y + 1 * CELL_SIZE - 1
+        return (x1, y1, x2, y2)
 
 
 @dataclass
@@ -48,6 +65,10 @@ class Car:
     @property
     def width(self):
         return self.size * CELL_SIZE
+
+    @property
+    def hitbox(self):
+        return (self.x + 1, self.y + 1, self.x + self.width - 1, self.y + 1 * CELL_SIZE - 1)
 
     def update(self, dt: float):
         self.x += self.direction * self.speed * dt
@@ -117,6 +138,10 @@ class WoodLog:
     @property
     def width(self):
         return self.size * CELL_SIZE
+    
+    @property
+    def hitbox(self):
+        return (self.x + 1, self.y + 1, self.x + self.width - 1, self.y + 1 * CELL_SIZE - 1)
     
     def update(self, dt: float):
         self.x += self.direction * self.speed * dt

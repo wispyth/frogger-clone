@@ -22,6 +22,7 @@ from rendering import (
     draw_cars,
     draw_logs,
 )
+from utils import rects_intersect
 
 
 class Game:
@@ -64,6 +65,18 @@ class Game:
             self.frog.move(0, +1)
         elif key in (ord('d'), 83): # D или стрелка вправо
             self.frog.move(+1, 0)
+    
+    def check_car_collisions(self):
+        for car in self.car_spawner.cars:
+            if rects_intersect(self.frog.hitbox, car.hitbox):
+                print("COLLISION WITH CAR!")
+                break
+    
+    def check_log_collisions(self):
+        for log in self.log_spawner.logs:
+            if rects_intersect(self.frog.hitbox, log.hitbox):
+                print("COLLISION WITH WOOD LOG!")
+                break
 
     def update(self, current_time, dt):
         if self.paused:
@@ -72,6 +85,13 @@ class Game:
         self.frog.update(dt)
         self.car_spawner.update(current_time, dt)
         self.log_spawner.update(current_time, dt)
+
+        if self.frog.on_road():
+            self.check_car_collisions()
+        
+        if self.frog.on_water():
+            self.check_log_collisions()
+
 
     def draw(self):
         frame = create_empty_frame()
