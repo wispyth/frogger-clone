@@ -20,36 +20,42 @@ from utils import clamp, weighted_choice
 
 @dataclass
 class Frog:
-    col: int
-    row: int
+    x: float
+    y: float
+
+    def update(self, dt: float):
+        self.x = clamp(self.x, 0, (GRID_COLS - 1) * CELL_SIZE)
+        self.y = clamp(self.y, 0, (GRID_ROWS - 1) * CELL_SIZE)
         
     def move(self, col: int, row: int):
-        self.col += col
-        self.row += row
-        self.col = clamp(self.col, 0, GRID_COLS - 1)
-        self.row = clamp(self.row, 0, GRID_ROWS - 1)
+        self.x += col * CELL_SIZE
+        self.y += row * CELL_SIZE
 
     def reset(self):
-        self.col = GRID_COLS // 2
-        self.row = GRID_ROWS - 2
+        self.x = (GRID_COLS // 2) * CELL_SIZE
+        self.y = (GRID_ROWS - 2) * CELL_SIZE
 
 
 @dataclass
 class Car:
     x: float
-    row: int
+    y: float
     direction: int
     speed: float
     size: int
     color: tuple
+
+    @property
+    def width(self):
+        return self.size * CELL_SIZE
 
     def update(self, dt: float):
         self.x += self.direction * self.speed * dt
 
     def is_visible(self) -> bool:
         if self.direction == +1:
-            return (self.x + self.size * CELL_SIZE) > 0
-        else:
+            return (self.x + self.width) > 0
+        if self.direction == -1:
             return self.x < WINDOW_WIDTH
 
 
@@ -70,12 +76,14 @@ class CarSpawner:
 
         if lane["dir"] == +1:
             x = -size * CELL_SIZE
-        else:
+            y = lane["row"] * CELL_SIZE
+        if lane["dir"] == -1:
             x = WINDOW_WIDTH
+            y = lane["row"] * CELL_SIZE
 
         return Car(
             x=x,
-            row=lane["row"],
+            y=y,
             direction=lane["dir"],
             speed=lane["speed"],
             size=size,
@@ -100,19 +108,23 @@ class CarSpawner:
 @dataclass
 class WoodLog:
     x: float
-    row: int
+    y: float
     direction: int
     speed: float
     size: int
     color: tuple
+
+    @property
+    def width(self):
+        return self.size * CELL_SIZE
     
     def update(self, dt: float):
         self.x += self.direction * self.speed * dt
 
     def is_visible(self) -> bool:
         if self.direction == +1:
-            return (self.x + self.size * CELL_SIZE) > 0
-        else:
+            return (self.x + self.width) > 0
+        if self.direction == -1:
             return self.x < WINDOW_WIDTH
         
 
@@ -133,12 +145,14 @@ class WoodLogSpawner:
 
         if lane["dir"] == +1:
             x = -size * CELL_SIZE
-        else:
+            y = lane["row"] * CELL_SIZE
+        if lane["dir"] == -1:
             x = WINDOW_WIDTH
+            y = lane["row"] * CELL_SIZE
 
         return WoodLog(
             x=x,
-            row=lane["row"],
+            y=y,
             direction=lane["dir"],
             speed=lane["speed"],
             size=size,

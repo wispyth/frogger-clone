@@ -39,24 +39,24 @@ def draw_ui(frame):
     cv2.putText(frame, "Press ESC or Q to quit", (10, 25), cv2.FONT_HERSHEY_COMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
 
 def draw_frog(frame, frog):
-    x_start = frog.col * CELL_SIZE + 4
-    y_start = frog.row * CELL_SIZE + 4
-    x_end = (frog.col + 1) * CELL_SIZE - 4
-    y_end = (frog.row + 1) * CELL_SIZE - 4
+    x_start = int(frog.x + 4)
+    y_start = int(frog.y + 4)
+    x_end = int(frog.x + 1 * CELL_SIZE - 4)
+    y_end = int(frog.y + 1 * CELL_SIZE - 4)
     cv2.rectangle(frame, (x_start, y_start), (x_end, y_end), (0, 255, 0), -1)
 
 def draw_cars(frame, cars):
     for car in cars:
         x_start = int(car.x + 4)
-        y_start = int(car.row * CELL_SIZE + 4)
+        y_start = int(car.y + 4)
         x_end = int(car.x + car.size * CELL_SIZE - 4)
-        y_end = int((car.row + 1) * CELL_SIZE - 4)
+        y_end = int(car.y + 1 * CELL_SIZE - 4)
         cv2.rectangle(frame, (x_start, y_start), (x_end, y_end), car.color, -1)
 
 def draw_logs(frame, logs):
     for log in logs:
         x_start = int(log.x + 4)
-        y_start = int(log.row * CELL_SIZE + 4)
+        y_start = int(log.y + 4)
         x_end = int(log.x + log.size * CELL_SIZE - 4)
-        y_end = int((log.row + 1) * CELL_SIZE - 4)
+        y_end = int(log.y + 1 * CELL_SIZE - 4)
         cv2.rectangle(frame, (x_start, y_start), (x_end, y_end), log.color, -1)

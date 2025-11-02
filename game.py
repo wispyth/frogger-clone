@@ -2,6 +2,7 @@ import cv2
 import time
 
 from settings import (
+    CELL_SIZE,
     GRID_COLS,
     GRID_ROWS,
     WINDOW_WIDTH,
@@ -30,7 +31,7 @@ class Game:
         cv2.resizeWindow(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT)
 
         # сущности
-        self.frog = Frog(col=GRID_COLS // 2, row=GRID_ROWS - 2)
+        self.frog = Frog(x=(GRID_COLS // 2) * CELL_SIZE, y=(GRID_ROWS - 2) * CELL_SIZE)
         self.car_spawner = CarSpawner(ROAD_LANES)
         self.log_spawner = WoodLogSpawner(WATER_LANES)
 
@@ -68,6 +69,7 @@ class Game:
         if self.paused:
             return
 
+        self.frog.update(dt)
         self.car_spawner.update(current_time, dt)
         self.log_spawner.update(current_time, dt)
 
