@@ -11,6 +11,7 @@ from settings import (
     WATER_COLOR,
     ROAD_COLOR,
     START_COLOR,
+    FINISH_ROWS, WATER_ROWS, ROAD_ROWS, START_ROWS,
 )
 
 def create_empty_frame():
@@ -22,10 +23,10 @@ def draw_background(frame):
     def row_y(row):
         return row * CELL_SIZE
 
-    cv2.rectangle(frame, (0, row_y(0)), (WINDOW_WIDTH, row_y(1)), FINISH_COLOR, -1)
-    cv2.rectangle(frame, (0, row_y(1)), (WINDOW_WIDTH, row_y(5)), WATER_COLOR, -1)
-    cv2.rectangle(frame, (0, row_y(5)), (WINDOW_WIDTH, row_y(9)), ROAD_COLOR, -1)
-    cv2.rectangle(frame, (0, row_y(9)), (WINDOW_WIDTH, row_y(12)), START_COLOR, -1)
+    cv2.rectangle(frame, (0, row_y(FINISH_ROWS[0])), (WINDOW_WIDTH, row_y(FINISH_ROWS[1] + 1)), FINISH_COLOR, -1)
+    cv2.rectangle(frame, (0, row_y(WATER_ROWS[0])), (WINDOW_WIDTH, row_y(WATER_ROWS[1] + 1)), WATER_COLOR, -1)
+    cv2.rectangle(frame, (0, row_y(ROAD_ROWS[0])), (WINDOW_WIDTH, row_y(ROAD_ROWS[1] + 1)), ROAD_COLOR, -1)
+    cv2.rectangle(frame, (0, row_y(START_ROWS[0])), (WINDOW_WIDTH, row_y(START_ROWS[1] + 1)), START_COLOR, -1)
 
 def draw_grid(frame):
     h, w, _ = frame.shape
@@ -34,29 +35,18 @@ def draw_grid(frame):
     for y in range(0, h, CELL_SIZE):
         cv2.line(frame, (0, y), (w, y), GRID_COLOR, 1)
 
-def draw_ui(frame):
-    cv2.putText(frame, "Frogger", (10, WINDOW_HEIGHT - 15), cv2.FONT_HERSHEY_COMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
-    cv2.putText(frame, "Press ESC or Q to quit", (10, 25), cv2.FONT_HERSHEY_COMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
+def draw_ui(frame, lives: int, state_text: str = ""):
+    cv2.putText(frame, f"Lives: {lives}", (10, WINDOW_HEIGHT - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
+    if state_text:
+        cv2.putText(frame, state_text, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
+
+def draw_rect_from_hitbox(frame, hb, color):
+    x1, y1, x2, y2 = hb
+    cv2.rectangle(frame, (int(x1 + 4), int(y1 + 4)), (int(x2 - 4), int(y2 - 4)), color, -1)
 
 def draw_frog(frame, frog):
-    x_start = int(frog.x + 4)
-    y_start = int(frog.y + 4)
-    x_end = int(frog.x + 1 * CELL_SIZE - 4)
-    y_end = int(frog.y + 1 * CELL_SIZE - 4)
-    cv2.rectangle(frame, (x_start, y_start), (x_end, y_end), (0, 255, 0), -1)
+    draw_rect_from_hitbox(frame, frog.hitbox, (0, 255, 0))
 
-def draw_cars(frame, cars):
-    for car in cars:
-        x_start = int(car.x + 4)
-        y_start = int(car.y + 4)
-        x_end = int(car.x + car.size * CELL_SIZE - 4)
-        y_end = int(car.y + 1 * CELL_SIZE - 4)
-        cv2.rectangle(frame, (x_start, y_start), (x_end, y_end), car.color, -1)
-
-def draw_logs(frame, logs):
-    for log in logs:
-        x_start = int(log.x + 4)
-        y_start = int(log.y + 4)
-        x_end = int(log.x + log.size * CELL_SIZE - 4)
-        y_end = int(log.y + 1 * CELL_SIZE - 4)
-        cv2.rectangle(frame, (x_start, y_start), (x_end, y_end), log.color, -1)
+def draw_movers(frame, movers):
+    for m in movers:
+        draw_rect_from_hitbox(frame, m.hitbox, m.color)

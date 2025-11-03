@@ -1,123 +1,163 @@
 import cv2
 import time
 
+from enums import GameState
 from settings import (
-    CELL_SIZE,
-    GRID_COLS,
-    GRID_ROWS,
-    WINDOW_WIDTH,
-    WINDOW_HEIGHT,
-    WINDOW_TITLE,
+    WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE,
     FRAME_DELAY_MS,
-    WATER_LANES,
-    ROAD_LANES,
+    FINISH_ROWS,
+    ROAD_LANES, WATER_LANES,
+    START_LIVES,
 )
-from entities import Frog, CarSpawner, WoodLogSpawner
+from entities import Frog, WoodLog, Crocodile
+from spawners import CarSpawner, WaterLaneSpawner
 from rendering import (
     create_empty_frame,
     draw_background,
     draw_grid,
     draw_ui,
     draw_frog,
-    draw_cars,
-    draw_logs,
+    draw_movers,
 )
 from utils import rects_intersect
 
 
 class Game:
     def __init__(self):
-        # окно
         cv2.namedWindow(WINDOW_TITLE, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT)
 
         # сущности
-        self.frog = Frog(x=(GRID_COLS // 2) * CELL_SIZE, y=(GRID_ROWS - 2) * CELL_SIZE)
-        self.car_spawner = CarSpawner(ROAD_LANES)
-        self.log_spawner = WoodLogSpawner(WATER_LANES)
+        self.frog = Frog(col=8, row=10)
+        self.cars = CarSpawner(ROAD_LANES)
+        self.water = WaterLaneSpawner(WATER_LANES) # брёвна + крокодилы
 
-        # время
-        self.last_time = time.time()
+        # состояние
+        self.state = GameState.PLAYING
+        self.lives = START_LIVES
         self.running = True
         self.paused = False
 
+        self.last_time = time.time()
+
+    # ==============================
+    # Ввод с клавиатуры
+    # ==============================
     def handle_input(self, key):
-        # выход
-        if key == 27 or key == ord('q'):
+        if key in (27, ord('q')):
             self.running = False
             return
-        
-        # пауза
         if key == ord('p'):
             self.paused = not self.paused
             return
-
-        # когда игра на паузе, движения не должны обрабатываться
-        if self.paused:
+        if self.paused or self.state != GameState.PLAYING:
             return
-        
-        # движение
-        if key in (ord('w'), 82):   # W или стрелка вверх
-            self.frog.move(0, -1)
-        elif key in (ord('a'), 81): # A или стрелка влево
-            self.frog.move(-1, 0)
-        elif key in (ord('s'), 84): # S или стрелка вниз
-            self.frog.move(0, +1)
-        elif key in (ord('d'), 83): # D или стрелка вправо
-            self.frog.move(+1, 0)
-    
-    def check_car_collisions(self):
-        for car in self.car_spawner.cars:
+
+        if key in (ord('w'), 82):
+            self.frog.step(0, -1)
+        elif key in (ord('a'), 81):
+            self.frog.step(-1, 0)
+        elif key in (ord('s'), 84):
+            self.frog.step(0, +1)
+        elif key in (ord('d'), 83):
+            self.frog.step(+1, 0)
+
+    # ==============================
+    # Коллизии & правила
+    # ==============================
+    def _attach_or_detach_on_water(self):
+        # наступили на бревно -> привязываемся к нему
+        if self.frog.attached_log is None and self.frog.on_water():
+            for it in self.water.all_items:
+                if isinstance(it, WoodLog) and rects_intersect(self.frog.hitbox, it.hitbox):
+                    self.frog.attach_to(it)
+                    break
+        # если уже привязаны к какому-то бревну, то проверяем до сих пор ли мы на нём стоим
+        elif self.frog.attached_log is not None:
+            cur = self.frog.attached_log
+            if rects_intersect(self.frog.hitbox, cur.hitbox):
+                return
+            # если не стоим, то пытаемся привязаться к другому бревну
+            for it in self.water.all_items:
+                if isinstance(it, WoodLog) and rects_intersect(self.frog.hitbox, it.hitbox):
+                    self.frog.attach_to(it)
+                    return
+            self.frog.detach()
+
+    def _death(self):
+        self.lives -= 1
+        print("DEAD")
+        if self.lives <= 0:
+            self.state = GameState.GAME_OVER
+        self.frog = Frog(col=8, row=10)
+
+    def _check_death_conditions(self):
+        # врезаемся в машину -> смерть
+        for car in self.cars.all_items:
             if rects_intersect(self.frog.hitbox, car.hitbox):
-                print("COLLISION WITH CAR!")
-                break
-    
-    def check_log_collisions(self):
-        for log in self.log_spawner.logs:
-            if rects_intersect(self.frog.hitbox, log.hitbox):
-                print("COLLISION WITH WOOD LOG!")
-                break
+                self._death(); return
 
-    def update(self, current_time, dt):
-        if self.paused:
+        # наступаем на крокодила -> смерть
+        for it in self.water.all_items:
+            if isinstance(it, Crocodile) and rects_intersect(self.frog.hitbox, it.hitbox):
+                self._death(); return
+
+        if self.frog.on_water():
+            # падаем в воду -> смерть
+            if self.frog.attached_log is None:
+                self._death(); return
+            # уезжаем на бревне за край экрана -> смерть
+            x1, _, x2, _ = self.frog.hitbox
+            if x1 < 0 or x2 > WINDOW_WIDTH:
+                self._death(); return
+
+    def _check_win(self):
+        if self.frog.row <= FINISH_ROWS[1]:
+            self.state = GameState.WIN
+            print("YOU WIN!")
+
+    # ==============================
+    # Обновление & рендеринг
+    # ==============================
+    def update(self, now, dt):
+        if self.paused or self.state != GameState.PLAYING:
             return
 
+        self.cars.update(now, dt)
+        self.water.update(now, dt)
         self.frog.update(dt)
-        self.car_spawner.update(current_time, dt)
-        self.log_spawner.update(current_time, dt)
 
-        if self.frog.on_road():
-            self.check_car_collisions()
-        
-        if self.frog.on_water():
-            self.check_log_collisions()
-
+        self._attach_or_detach_on_water()
+        self._check_death_conditions()
+        self._check_win()
 
     def draw(self):
         frame = create_empty_frame()
         draw_background(frame)
         draw_grid(frame)
-        draw_logs(frame, self.log_spawner.logs)
+        # крокодилы и брёвна -> лягушка -> машины
+        draw_movers(frame, self.water.all_items)
         draw_frog(frame, self.frog)
-        draw_cars(frame, self.car_spawner.cars)
-        draw_ui(frame)
+        draw_movers(frame, self.cars.all_items)
+
+        state_text = ""
+        if self.state == GameState.GAME_OVER:
+            state_text = "GAME OVER - press Q"
+        elif self.state == GameState.WIN:
+            state_text = "YOU WIN!"
+        draw_ui(frame, self.lives, state_text)
         cv2.imshow(WINDOW_TITLE, frame)
 
     def run(self):
         while self.running:
-            current_time = time.time()
-            dt = current_time - self.last_time
-            self.last_time = current_time
+            now = time.time()
+            dt = now - self.last_time
+            self.last_time = now
 
-            # логика
-            self.update(current_time, dt)
-
-            # отрисовка
+            self.update(now, dt)
             self.draw()
 
-            # ввод
             key = cv2.waitKey(FRAME_DELAY_MS) & 0xFF
             if key != 255:
                 self.handle_input(key)
-
         cv2.destroyAllWindows()
