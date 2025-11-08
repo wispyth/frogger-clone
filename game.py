@@ -33,7 +33,7 @@ class Game:
         self.water = WaterLaneSpawner(WATER_LANES) # брёвна + крокодилы
 
         # состояние
-        self.state = GameState.PLAYING
+        self.state = GameState.START
         self.lives = START_LIVES
         self.running = True
         self.paused = False
@@ -46,6 +46,13 @@ class Game:
     def handle_input(self, key):
         if key in (27, ord('q')):
             self.running = False
+            return
+        if key == 13 and self.state == GameState.START:
+            self.state = GameState.PLAYING
+            return
+        if key != 255 and self.state in (GameState.GAME_OVER, GameState.WIN):
+            self.state = GameState.START
+            self.lives = START_LIVES
             return
         if key == ord('p'):
             self.paused = not self.paused
@@ -115,12 +122,13 @@ class Game:
         if self.frog.row <= FINISH_ROWS[1]:
             self.state = GameState.WIN
             print("YOU WIN!")
+            self.lives += 1; self._death(); return
 
     # ==============================
     # Обновление & рендеринг
     # ==============================
     def update(self, now, dt):
-        if self.paused or self.state != GameState.PLAYING:
+        if self.paused or self.state not in (GameState.START, GameState.PLAYING):
             return
 
         self.cars.update(now, dt)
@@ -137,14 +145,21 @@ class Game:
         draw_grid(frame)
         # крокодилы и брёвна -> лягушка -> машины
         draw_movers(frame, self.water.all_items)
-        draw_frog(frame, self.frog)
+
+        if self.state != GameState.START:
+            draw_frog(frame, self.frog)
+
         draw_movers(frame, self.cars.all_items)
 
         state_text = ""
-        if self.state == GameState.GAME_OVER:
-            state_text = "GAME OVER - press Q"
+        if self.paused == True:
+            state_text = "PAUSED"
+        elif self.state == GameState.START:
+            state_text = "Press ENTER to start play"
+        elif self.state == GameState.GAME_OVER:
+            state_text = "GAME OVER - press ANY KEY to restart"
         elif self.state == GameState.WIN:
-            state_text = "YOU WIN!"
+            state_text = "YOU WIN! - press ANY KEY to restart"
         draw_ui(frame, self.lives, state_text)
         cv2.imshow(WINDOW_TITLE, frame)
 

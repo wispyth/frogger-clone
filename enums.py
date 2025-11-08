@@ -5,6 +5,8 @@ class Direction(int, Enum):
     RIGHT = +1
 
 class GameState(Enum):
+    START     = auto()
     PLAYING   = auto()
+    PAUSED    = auto()
     GAME_OVER = auto()
     WIN       = auto()
