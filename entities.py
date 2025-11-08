@@ -68,7 +68,7 @@ class Frog(HasHitbox):
         if self.attached_log is None:
             self.col += col
         else:
-            self.rel_cell = clamp(self.rel_cell + col, 0, self.attached_log.size - 1)
+            self.rel_cell = self.rel_cell + col
 
         self._clamp_to_bounds()
 
