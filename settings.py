@@ -9,22 +9,34 @@ WINDOW_HEIGHT = GRID_ROWS * CELL_SIZE
 WINDOW_TITLE = "Frogger"
 
 # === Скорость обновления кадров ===
-TARGET_FPS = 30
+TARGET_FPS = 60
 FRAME_DELAY_MS = int(1000 / TARGET_FPS)
 
 # === Цвета (в BGR) ===
 BG_COLOR = (10, 10, 10)
 GRID_COLOR = (50, 50, 50)
 FINISH_COLOR = (190, 15, 150)
-WATER_COLOR = (255, 0, 0)
+WATER_COLOR = (236, 163, 28)
 ROAD_COLOR = (60, 60, 60)
-START_COLOR = (0, 120, 0)
+START_COLOR = (10, 152, 65)
 
 # === Зоны (включительно) ===
 FINISH_ROWS = (0, 0)
 WATER_ROWS = (1, 4)
 ROAD_ROWS = (5, 8)
 START_ROWS = (9, 11)
+
+# === Финиш (кувшинки) ===
+# Колонки для 5 кувшинок
+LILYPAD_LOCATIONS = [2, 5, 8, 11, 14]
+
+# === Старт (трава) ===
+# Координаты для травинок
+GRASS_LOCATIONS = [
+    (2, 9), (14, 9),
+    (5, 10), (9, 10), (12, 10),
+    (1, 11), (3, 11), (7, 11), (13, 11), (15, 11),
+]
 
 # === Параметры полос ===
 # Дорога
@@ -43,7 +55,7 @@ WATER_LANES = [
     {"row": 3, "dir": -1, "speed": 60},
     {"row": 4, "dir": +1, "speed": 50},
 ]
-WATER_TARGET_GAP_CELLS = 3.0
+WATER_TARGET_GAP_CELLS = 9.0
 
 # === Параметры машин ===
 CAR_SIZES = [
@@ -68,7 +80,7 @@ LOG_SIZES = [
     {"size": 4, "prob": 0.20},
 ]
 LOG_COLORS = [
-    (131, 86, 62),
+    (87, 122, 169),
 ]
 
 # === Параметры крокодилов ===

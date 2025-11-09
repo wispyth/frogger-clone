@@ -142,11 +142,11 @@ class Game:
     def draw(self):
         frame = create_empty_frame()
         draw_background(frame)
-        draw_grid(frame)
+        # draw_grid(frame)
         # крокодилы и брёвна -> лягушка -> машины
         draw_movers(frame, self.water.all_items)
 
-        if self.state != GameState.START:
+        if self.state not in (GameState.START, GameState.GAME_OVER, GameState.WIN):
             draw_frog(frame, self.frog)
 
         draw_movers(frame, self.cars.all_items)

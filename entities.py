@@ -7,7 +7,7 @@ from settings import (
     WINDOW_WIDTH,
     WATER_ROWS, ROAD_ROWS,
 )
-from enums import Direction
+from enums import Direction, Facing
 from utils import clamp
 
 
@@ -25,6 +25,7 @@ class Frog(HasHitbox):
     col: int
     row: int
 
+    facing: Facing = Facing.UP
     attached_log: Optional[WoodLog] = None
     rel_cell: int = 0 # позиция относительно бревна
 
@@ -57,6 +58,11 @@ class Frog(HasHitbox):
     # Действия
     # ==============================
     def step(self, col: int, row: int):
+        if col > 0: self.facing = Facing.RIGHT
+        elif col < 0: self.facing = Facing.LEFT
+        elif row > 0: self.facing = Facing.DOWN
+        elif row < 0: self.facing = Facing.UP
+
         if row != 0 and self.attached_log is not None:
             # при сходе с бревна нужно снова встать в сетку
             self.col = int(round(self.pixel_x / CELL_SIZE))
