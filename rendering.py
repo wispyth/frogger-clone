@@ -227,8 +227,8 @@ def draw_grid(frame):
     for y in range(0, h, CELL_SIZE):
         cv2.line(frame, (0, y), (w, y), GRID_COLOR, 1)
 
-def draw_ui(frame, lives: int, state_text: str = ""):
-    cv2.putText(frame, f"Lives: {lives}", (10, WINDOW_HEIGHT - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
+def draw_ui(frame, lives: int, score: int, state_text: str = ""):
+    cv2.putText(frame, f"Lives: {lives} Score: {score}", (10, WINDOW_HEIGHT - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
     if state_text:
         cv2.putText(frame, state_text, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
 

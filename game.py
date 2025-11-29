@@ -39,6 +39,11 @@ class Game:
         self.paused = False
 
         self.last_time = time.time()
+        self.max_pos = 0
+
+    @property
+    def score(self):
+        return self.max_pos * 10
 
     # ==============================
     # Ввод с клавиатуры
@@ -96,6 +101,7 @@ class Game:
         print("DEAD")
         if self.lives <= 0:
             self.state = GameState.GAME_OVER
+            self.max_pos = 0
         self.frog = Frog(col=8, row=10)
 
     def _check_death_conditions(self):
@@ -122,7 +128,11 @@ class Game:
         if self.frog.row <= FINISH_ROWS[1]:
             self.state = GameState.WIN
             print("YOU WIN!")
-            self.lives += 1; self._death(); return
+            self.lives += 1; self._death(); self.max_pos = 0; return
+        
+    def _score_update(self):
+        if self.frog.row <= (10 - self.max_pos):
+            self.max_pos = 10 - self.frog.row
 
     # ==============================
     # Обновление & рендеринг
@@ -138,6 +148,7 @@ class Game:
         self._attach_or_detach_on_water()
         self._check_death_conditions()
         self._check_win()
+        self._score_update()
 
     def draw(self):
         frame = create_empty_frame()
@@ -160,7 +171,7 @@ class Game:
             state_text = "GAME OVER - press ANY KEY to restart"
         elif self.state == GameState.WIN:
             state_text = "YOU WIN! - press ANY KEY to restart"
-        draw_ui(frame, self.lives, state_text)
+        draw_ui(frame, self.lives, self.score, state_text)
         cv2.imshow(WINDOW_TITLE, frame)
 
     def run(self):
